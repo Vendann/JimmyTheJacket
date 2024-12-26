@@ -1,5 +1,6 @@
 using System.Threading;
 using UnityEngine;
+using Cinemachine;
 
 public class PlayerController : MonoBehaviour
 {
@@ -32,11 +33,11 @@ public class PlayerController : MonoBehaviour
     private Vector3 _move;
 
     [Header("Camera")]
+    [SerializeField] private CinemachineVirtualCamera _virtualCamera;
     [SerializeField] private float _mouseSensitivity = 1000f;
-    [SerializeField] private Transform _cameraTransform;
+    private float _xRotation = 0f;
     private float mouseX;
     private float mouseY;
-    private float _xRotation = 0f;
 
     private void Start() {
         Cursor.lockState = CursorLockMode.Locked;
@@ -47,7 +48,7 @@ public class PlayerController : MonoBehaviour
         InputManagement();
         Move();
         JumpAndGravity();
-        CameraRotation();
+        CameraLook();
     }
 
     // Метод для считывания ввода
@@ -100,18 +101,18 @@ public class PlayerController : MonoBehaviour
         if (_isCrouched) { // Тут игрок встает
             _controller.height = _standingHeight;
             _controller.center = Vector3.zero;
-            _cameraTransform.position += new Vector3(0f, _standingHeight / 2, 0f);
+            _virtualCamera.m_Follow.transform.position += new Vector3(0f, _standingHeight / 2, 0f);
         }
         else { // Тут игрок приседает
             _controller.height = _crouchedHeight;
             _controller.center = new Vector3(0f, -_crouchedHeight / 2, 0f);
-            _cameraTransform.position -= new Vector3(0f, _standingHeight / 2, 0f);
+            _virtualCamera.m_Follow.transform.position -= new Vector3(0f, _standingHeight / 2, 0f);
         }
         return !isCrouched; // Возвращаем измененный режим
     }
 
     // Метод вращения камеры
-    private void CameraRotation() {
+    private void CameraLook() {
         if (mouseX == 0 && mouseY == 0) return;
 
         mouseX *= _mouseSensitivity * Time.deltaTime;
@@ -120,7 +121,7 @@ public class PlayerController : MonoBehaviour
         _xRotation -= mouseY;
         _xRotation = Mathf.Clamp(_xRotation, -90f, 90f);
 
-        _cameraTransform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
+        _virtualCamera.transform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
     }
 }
