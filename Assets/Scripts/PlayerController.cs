@@ -95,8 +95,8 @@ public class PlayerController : MonoBehaviour
         if (!_isGrounded) return isSprinting;
         if (_isCrouched) return false;
 
-        if (isSprinting) _camera.fieldOfView = 90f;
-        else _camera.fieldOfView = 100f;
+        // if (isSprinting) _camera.fieldOfView = 90f;
+        // else _camera.fieldOfView = 100f;
         return !isSprinting; // Возвращаем измененный режим
     }
 

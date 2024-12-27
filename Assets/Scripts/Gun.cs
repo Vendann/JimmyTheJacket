@@ -1,5 +1,6 @@
 using UnityEngine;
 using EZCameraShake;
+using System.Collections;
 
 public class Gun : MonoBehaviour
 {
@@ -22,13 +23,18 @@ public class Gun : MonoBehaviour
     private bool _reloading;
 
     [Header("References")]
-    [SerializeField] private Camera _cameraTransform;
+    [SerializeField] private Camera _camera;
     [SerializeField] private LayerMask _layerMask = new LayerMask();
     // TODO: Сделать вспышки при выстреле и эффекты попадания
     [SerializeField] private ParticleSystem _muzzleFlash;
     [SerializeField] private GameObject _bulletHoleDecal;
 
     private RaycastHit _hit;
+
+    [Header("Camera Shaker Parameters")]
+    [SerializeField] private float _duration;
+    [SerializeField] private float _rotationAngle;
+    [SerializeField] private Vector2 _rotationDirection;
 
     private void Awake() {
         _bulletsLeft = _magazineSize;
@@ -48,6 +54,7 @@ public class Gun : MonoBehaviour
         if (_readyToShoot && _shooting && !_reloading && _bulletsLeft > 0) {
             _bulletsShot = _bulletsPerShot;
             Shoot();
+            ShakeRotateCamera(_duration, _rotationAngle, _rotationDirection);
         }
     }
 
@@ -70,14 +77,14 @@ public class Gun : MonoBehaviour
         Vector2 dir = new Vector2(x, y);
         dir.Normalize();
 
-        Vector3 shotDirection = _cameraTransform.transform.position + new Vector3(dir.x, dir.y, 0);
+        Vector3 shotDirection = _camera.transform.forward + new Vector3(x, y, 0);
 
-        if (Physics.Raycast(_cameraTransform.transform.position, _cameraTransform.transform.forward, out _hit, _fireRange, _layerMask)) {
+        if (Physics.Raycast(_camera.transform.position, shotDirection, out _hit, _fireRange, _layerMask)) {
             var damageable = _hit.transform.GetComponent<IDamageable>();
             if (damageable != null) damageable.ReceiveDamage(_damage, _hit.point);
         }
 
-        CameraShaker.Instance.ShakeOnce(4f, 4f, 0f, 0.2f);
+        // CameraShaker.Instance.ShakeOnce(_magnitude, _roughness, _fadeInTime, _fadeOutTime, Vector3.zero, new Vector3(10f, 0f, 0f));
 
         ShootVisual();
 
@@ -99,5 +106,30 @@ public class Gun : MonoBehaviour
         GameObject bulletHole = Instantiate(_bulletHoleDecal, _hit.point, Quaternion.LookRotation(_hit.normal));
         bulletHole.transform.position += bulletHole.transform.forward / 1000f;
         Destroy(bulletHole, 5f);
+    }
+
+
+    public void ShakeRotateCamera(float duration, float angleDeg, Vector2 direction) {
+        StartCoroutine(ShakeRotateCor(duration, angleDeg, direction));
+    }
+
+    private IEnumerator ShakeRotateCor(float duration, float angleDeg, Vector2 direction) {
+        float elapsed = 0f;
+        Quaternion startRotation = _camera.transform.localRotation;
+
+        float halfDuration = duration / 2;
+        direction = direction.normalized;
+        while (elapsed < duration) {
+            Vector2 currentDirection = direction;
+            float t = elapsed < halfDuration ? elapsed / halfDuration : (duration - elapsed) / halfDuration;
+            float currentAngle = Mathf.Lerp(0f, angleDeg, t);
+            currentDirection *= Mathf.Tan(currentAngle * Mathf.Deg2Rad);
+            Vector3 resDirection = ((Vector3)currentDirection + Vector3.forward).normalized;
+            _camera.transform.localRotation = Quaternion.FromToRotation(Vector3.forward, resDirection);
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        _camera.transform.localRotation = startRotation;
     }
 }
