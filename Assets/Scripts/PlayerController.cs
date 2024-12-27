@@ -1,4 +1,3 @@
-using System.Threading;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -33,9 +32,10 @@ public class PlayerController : MonoBehaviour
 
     [Header("Camera")]
     [SerializeField] private float _mouseSensitivity = 1000f;
+    [SerializeField] private Camera _camera;
     [SerializeField] private Transform _cameraTransform;
-    private float mouseX;
-    private float mouseY;
+    private float _mouseX;
+    private float _mouseY;
     private float _xRotation = 0f;
 
     private void Start() {
@@ -55,8 +55,8 @@ public class PlayerController : MonoBehaviour
         _moveRight = Input.GetAxis("Horizontal");
         _moveForward = Input.GetAxis("Vertical");
 
-        mouseX = Input.GetAxis("Mouse X");
-        mouseY = Input.GetAxis("Mouse Y");
+        _mouseX = Input.GetAxis("Mouse X");
+        _mouseY = Input.GetAxis("Mouse Y");
 
         if (Input.GetButtonDown("Sprint")) _isSprinting = ToggleSprint(_isSprinting);
         if (Input.GetButtonDown("Crouch")) _isCrouched = ToggleCrouch(_isCrouched);
@@ -92,17 +92,25 @@ public class PlayerController : MonoBehaviour
 
     // Метод спринта
     private bool ToggleSprint(bool isSprinting) {
+        if (!_isGrounded) return isSprinting;
+        if (_isCrouched) return false;
+
+        if (isSprinting) _camera.fieldOfView = 90f;
+        else _camera.fieldOfView = 100f;
         return !isSprinting; // Возвращаем измененный режим
     }
 
     // Метод приседания, меняет размер капсулы и ее центр, а также положение камеры
     private bool ToggleCrouch(bool isCrouched) {
+        if (!_isGrounded) return isCrouched;
+
         if (_isCrouched) { // Тут игрок встает
             _controller.height = _standingHeight;
             _controller.center = Vector3.zero;
             _cameraTransform.position += new Vector3(0f, _standingHeight / 2, 0f);
         }
         else { // Тут игрок приседает
+            ToggleSprint(true);
             _controller.height = _crouchedHeight;
             _controller.center = new Vector3(0f, -_crouchedHeight / 2, 0f);
             _cameraTransform.position -= new Vector3(0f, _standingHeight / 2, 0f);
@@ -112,15 +120,15 @@ public class PlayerController : MonoBehaviour
 
     // Метод вращения камеры
     private void CameraRotation() {
-        if (mouseX == 0 && mouseY == 0) return;
+        if (_mouseX == 0 && _mouseY == 0) return;
 
-        mouseX *= _mouseSensitivity * Time.deltaTime;
-        mouseY *= _mouseSensitivity * Time.deltaTime;
+        _mouseX *= _mouseSensitivity * Time.deltaTime;
+        _mouseY *= _mouseSensitivity * Time.deltaTime;
 
-        _xRotation -= mouseY;
+        _xRotation -= _mouseY;
         _xRotation = Mathf.Clamp(_xRotation, -90f, 90f);
 
         _cameraTransform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
-        transform.Rotate(Vector3.up * mouseX);
+        transform.Rotate(Vector3.up * _mouseX);
     }
 }
