@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LivingObjectHealth : MonoBehaviour, IDamageable
 {
@@ -7,6 +8,7 @@ public class LivingObjectHealth : MonoBehaviour, IDamageable
 
     private float _health;
     public float Health => _health;
+    public bool isPlayer;
 
     private void Awake() {
         _health = _maxHealth;
@@ -14,10 +16,24 @@ public class LivingObjectHealth : MonoBehaviour, IDamageable
 
     public void ReceiveDamage(float damageAmount, Vector3 hitPosition) {
         _health -= damageAmount;
-        if (_health <= 0) Destroy(gameObject);
+
+        if (!isPlayer) {
+            // SoundManager.Instance.damageReaction = GetComponent<Enemy>().damageReaction;
+            // SoundManager.Instance.damageReaction.Play();
+        }
+
+        if (_health <= 0) {
+            if (isPlayer) SceneManager.LoadScene(1);
+            Destroy(gameObject);
+        }
     }
 
     public void ReceiveHeal(float healAmount, Vector3 hitPosition) {
         if (_health < _maxHealth) _health += healAmount;
+        if (_health > _maxHealth) _health = _maxHealth;
+    }
+
+    public void LoadScene() {
+        SceneManager.LoadScene(1);
     }
 }

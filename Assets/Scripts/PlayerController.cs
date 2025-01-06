@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -35,8 +36,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Camera _camera;
     [SerializeField] private Transform _cameraTransform;
     private float _mouseX;
+    public float MouseX => _mouseX;
     private float _mouseY;
+    public float MouseY => _mouseY;
     private float _xRotation = 0f;
+
+    public LivingObjectHealth HP;
+    public Text textHP;
 
     private void Start() {
         Cursor.lockState = CursorLockMode.Locked;
@@ -48,6 +54,7 @@ public class PlayerController : MonoBehaviour
         Move();
         JumpAndGravity();
         CameraRotation();
+        textHP.text = "HP: " + HP.Health.ToString();
     }
 
     // Метод для считывания ввода
